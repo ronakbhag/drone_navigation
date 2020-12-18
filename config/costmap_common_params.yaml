@@ -1,0 +1,11 @@
+obstacle_range: 2.5
+raytrace_range: 3.0
+
+footprint: [[0.33, 0.33], [-0.33, 0.33], [-0.33, -0.33], [0.33, -0.33]]
+
+inflation_radius: 0.55
+
+observation_sources: astra_point_cloud #astra_fake_laser
+
+#astra_fake_laser: {sensor_frame: camera_link, data_type: LaserScan, topic: astra_scan, marking: true, clearing: true}
+astra_point_cloud: {sensor_frame: camera_link, data_type: PointCloud, topic: camera/depth/points, marking: true, clearing: true}
