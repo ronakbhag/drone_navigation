@@ -1,0 +1,81 @@
+<launch>
+  <!-- LAUNCH FILE FOR GATHERING DATA USING ROSBAG WITH THE PHYSICAL DRONE FLYING MANUALLY.-->
+
+  <!-- Launch arguments for what we're running -->
+  <arg name="ueye" default="false"/>
+  <arg name="ocam" default="false"/>
+  <arg name="marvelmind" default="false"/>
+  <arg name="imu" default="true"/>
+  <arg name="fr" default="30"/>
+  <arg name="record" default="true"/>
+  <arg name="use_rosbag" default="true"/>
+  <arg name="device" default="video0"/>
+
+  <!-- If we're collecting uEye data -->
+  <group if="$(arg ueye)">
+    <!-- Need the live camera actually running -->
+    <include file="$(find ueye_cam)/launch/rgb8.launch">
+      <arg name="framerate" value="$(arg fr)"/>
+    </include>
+
+    <!-- ROSBAG data -->
+    <group if="$(arg record)">
+      <node name="rosbag_record_ids" pkg="rosbag" type="record" if="$(arg record)"
+        args="record -o ids_data /camera/image_raw /camera/camera_info"/>
+    </group>
+  </group>
+
+  <!-- If we're collecting oCam data -->
+  <group if="$(arg ocam)">
+    <!-- Run the camera using usb_cam -->
+    <node name="ocam_usb_drive" pkg="usb_cam" type="usb_cam_node" output="log">
+      <param name="video_device" type="string" value="/dev/$(arg device)"/>
+      <param name="brightness" type="int" value="1"/>
+      <param name="contrast" type="int" value="60"/>
+      <param name="pixel_format" type="string" value="yuyv"/>
+    </node>
+
+    <!-- ROSBAG data -->
+    <group if="$(arg record)">
+      <group if="$(arg use_rosbag)">
+        <node name="rosbag_record_ocam" pkg="rosbag" type="record" if="$(arg record)"
+          args="record -o ocam_data /ocam_usb_drive/image_raw /ocam_usb_drive/camera_info"/>
+      </group>
+      <group if="$(eval use_rosbag == false)">
+        <node pkg="drone_navigation" type="rgb_to_gray" name="grayscale_converter" output="screen">
+          <param name="task" type="string" value="save"/>
+          <param name="input_stream" type="string" value="/ocam_usb_drive/image_raw"/>
+        </node>        
+      </group>
+    </group>
+  </group>
+
+
+  <!-- If we have some camera collecting data -->
+  <group if="$(eval imu and (ueye or ocam))">
+    <!-- Also need to record IMU data -->
+    <include file="$(find drone_navigation)/launch/physical/mavros_phys.launch">
+      <arg name="firmware" value="apm"/>
+    </include>
+
+    <!-- And record IMU data in a bag -->
+    <node name="rosbag_record_imu" pkg="rosbag" type="record" if="$(arg record)"
+      args="record -o imu_data /mavros/imu/data"/>
+  </group>
+
+
+  <!-- If we're collecting marvelmind information -->
+  <group if="$(arg marvelmind)">
+    <!-- Run the monitor -->
+    <node name="marvelmind_monitor" pkg="marvelmind_nav" type="hedge_rcv_bin"/>
+
+    <!-- And bag the marvelmind trace -->
+    <group if="$(arg record)">
+      <node name="rosbag_record_marvelmind" pkg="rosbag" type="record" if="$(arg record)"
+        args="record -o marvelmind_data /hedge_pos_ang" />
+    </group>
+  </group>
+
+</launch>
+
+
