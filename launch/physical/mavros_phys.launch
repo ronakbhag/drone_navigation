@@ -1,0 +1,28 @@
+<!-- Just launch MAVROS for the appropriate Firmware -->
+<launch>
+    <!-- Firmware argument, if unset, no mavros launches, so nothing works -->
+    <arg name="firmware" default="-"/>
+    <!-- FCU URL override, in case we need to change based on platform -->
+    <arg name="fcu_url" default="/dev/ttyUSB0:921600"/>
+
+    <!-- MAVROS PX4 -->
+    <group if="$(eval firmware == 'px4')">
+        <include file="$(find mavros)/launch/px4.launch">
+            <arg name="gcs_url" value=""/> <!-- GCS link is provided by SITL (????) -->
+            <arg name="fcu_url" value="$(arg fcu_url)"/>
+        </include>
+    </group>
+    <!-- MAVROS APM -->
+    <group if="$(eval firmware == 'apm')">
+        <include file="$(find mavros)/launch/apm.launch">
+            <arg name="gcs_url" value=""/> <!-- GCS link is provided by SITL (????) -->
+            <group if="$(eval fcu_url == '')">
+                <arg name="fcu_url" value="/dev/ttyS0:921600"/>
+            </group>
+            <group if="$(eval fcu_url != '')">
+                <arg name="fcu_url" value="$(arg fcu_url)"/>
+            </group>
+        </include>
+    </group>
+
+</launch>
