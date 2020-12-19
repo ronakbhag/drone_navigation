@@ -1,0 +1,10 @@
+<launch>
+    <arg name="path_file" default="~"/>
+    <arg name="return_to_home" default="true"/>
+
+    <!-- Launch the Path Follower Node -->
+    <node name="drone_global_planner" pkg="drone_navigation" type="drone_mp_path_reader" output="screen">
+        <param name="path_file" type="str" value="$(arg path_file)"/>
+        <param name="return_to_home" type="bool" value="$(arg return_to_home)"/>
+    </node>
+</launch>
