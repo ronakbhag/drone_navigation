@@ -1,0 +1,47 @@
+<launch>
+  <!-- MAVROS configs -->
+  <arg name="fcu_url" default="/dev/ttyUSB0:921600"/>
+  <arg name="respawn_mavros" default="false"/>    
+  <!-- MAVROS -->
+  <include file="$(find mavros)/launch/px4.launch">
+    <!-- GCS link is provided by SITL -->
+    <arg name="gcs_url" value=""/>
+    <arg name="fcu_url" value="$(arg fcu_url)"/>
+    <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+  </include>
+
+  <!-- Launch node to to transform between ROS messages depthimage -> laserscan -->
+  <node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan">
+    <!-- Remap the topic to which the node listens to. Wiki says depth/image_raw 
+         is best for OpenNi. Output topic is /scan -->  
+    <remap from="image" to="camera/depth/image_raw"/>
+  </node>
+
+  <!-- Launch ROS driver for the Orbbec Astra Mini camera -->
+  <include file="$(find astra_launch)/launch/astra.launch"/>
+
+  <!-- Launch RTABMAP with visual odom off. Will instead send odom information coming
+       from the transformation node -->
+  <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+    <!-- Parameters for RTABMAP: Turn on scan subscriber which should listen to topic /scan.
+         Turn off rtabmapviz visual. Turn on odom transformation. Turn off visual odom node -->  
+    <arg name="subscribe_scan"      value="true"/>
+    <arg name="rtabmapviz"          value="false"/>
+    <arg name="odom_frame_id"       value="odom"/>
+    <arg name="visual_odometry"     value="false"/> 
+    <arg name="args"                value="--delete_db_on_start"/>
+  </include>
+
+  <!-- LAUNCH OUR NODES -->
+  <!-- Drone monitor to arm the drone and get it started -->
+  <include file="$(find drone_navigation)/launch/drone_monitor.launch"/>
+  
+  <!-- Launch node that will provide odom transformation -->
+  <include file="$(find drone_navigation)/launch/drone_odometry.launch"/>
+
+  <!-- Launch the Path Follower, which will be ready to follow paths -->
+  <include file="$(find drone_navigation)/launch/path_follower.launch"/>
+
+  <!-- Launch the naive wander -->
+  <include file="$(find drone_navigation)/launch/drone_naive_wander.launch"/>
+</launch>
