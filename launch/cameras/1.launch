@@ -1,0 +1,41 @@
+<launch>
+    <arg name="mavros" default="true"/>
+    <arg name="mission" default="true"/>
+    <arg name="verbose" default="false"/>
+    <arg name="loop_closure" default="true"/>
+    <arg name="self_start" default="true"/>
+    <arg name="rth" default="true"/>
+    <arg name="lidar_timeout" default="1.0"/>
+    <!-- A Toggel for what actual camera to use -->
+    <arg name="use_zed" default="false"/>
+
+    <!-- Launch 3 nodes as below
+    At development stage, each node should be launched in a separated terminal to view the output -->
+
+    <!-- This node will launch the ROS driver for Realsense T265 -->
+    <include file="$(find realsense2_camera)/launch/rs_t265.launch"/>
+
+    <!-- This node will launch MAVROS -->
+    <include file="$(find mavros)/launch/px4.launch"/>
+
+    <!-- This node will launch the node that bridges realsense-ros and MAVROS -->
+    <include file="$(find vision_to_mavros)/launch/t265_tf_to_mavros.launch"/>
+  
+    <include file="$(find ids_coordinates_setter)/launch/ids_coordinates_setter.launch"/>
+
+     
+
+    <!-- Optionally run Mission Code -->
+    <group if="$(arg mission)">
+        <!-- Launch the Global: Path File reader, which will read up a file & publish -->
+        <include file="$(find drone_navigation)/launch/modules/global_planners/global_path_reader.launch">
+            <arg name="path_file" value="$(find drone_navigation)/launch/missions/physical/verification/path_verification.txt"/>
+            <arg name="return_to_home" value="$(arg rth)"/>
+        </include>
+        <!-- Launch the Local: Path Follower, which will get ready to follow paths -->
+        <node pkg="drone_navigation" type="position_control" name="position_control" />
+    </group>
+
+</launch>
+
+
