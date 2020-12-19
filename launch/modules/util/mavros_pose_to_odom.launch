@@ -1,0 +1,5 @@
+<launch>
+  <!-- Launch odom transformation node which will take odom data coming from MAVROS
+       and broadcast it as the odom transformation to base_link -->
+  <node name="odom_to_tf_interpreter" pkg="drone_navigation" type="drone_odom_node" output="log"/>
+</launch>
