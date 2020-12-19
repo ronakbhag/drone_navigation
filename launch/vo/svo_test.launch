@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- We probably need to have things use sim time -->
+    <param name="use_sim_time" value="true" />
+
+    <!-- Set up the Odometry interpretation for TF -->
+    <include file="$(find drone_navigation)/launch/modules/util/mavros_pose_to_odom.launch"/>
+
+    <!-- IMPORTANT: Until Mapping exists, we will need to publish this thing statically -->
+    <node name="map_to_odom" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 map odom"/>
+
+    <!-- Launch RVIZ visualization -->
+    <include file="$(find air_drone)/launch/display.launch"/>
+
+    <!-- Also need the drone monitor to arm the drone and get it started -->
+    <include file="$(find drone_navigation)/launch/simulation/drone_monitor.launch" />
+
+    <!-- Launch svo_transformation node -->
+    <include file="$(find svo_transform)/launch/svo_transform.launch"/>
+
+    <!-- Running the live camera -->
+    <!-- <include file="$(find ueye_cam)/launch/rgb8.launch"/> -->
+
+    <!-- We're also going to launch svo live -->
+    <include file="$(find svo_ros)/launch/live.launch">
+        <arg name="camera_topic" value="/camera/image_raw"/>
+        <arg name="output" value="screen"/>
+    </include>
+    <node name="cam_pos_pub" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 3.14159 0 ids_ueye cam_pos"/>
+
+    <node name="state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+
+
+</launch>
