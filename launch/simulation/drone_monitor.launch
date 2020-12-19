@@ -1,0 +1,9 @@
+<launch>   
+    <!-- We need to know what firmware is being run, unfortunately -->
+    <arg name="firmware_type" default="apm" />    
+
+    <!-- Node that will monitor the state of the drone and act accordingly as a failsafe -->  
+    <node name="drone_monitor" pkg="drone_navigation" type="drone_monitor" output="screen">
+        <param name="firmware" type="str" value="$(arg firmware_type)"/>
+    </node>
+</launch>
